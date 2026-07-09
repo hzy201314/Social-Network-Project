@@ -26,6 +26,9 @@ public class User {
     @Column(length = 100)
     private String email;
 
+    @Column(length = 200)
+    private String bio;   // ✅ 新增：个人简介
+
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
@@ -48,6 +51,9 @@ public class User {
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
+
+    public String getBio() { return bio; }
+    public void setBio(String bio) { this.bio = bio; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

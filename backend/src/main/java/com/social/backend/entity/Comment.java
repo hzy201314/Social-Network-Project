@@ -20,6 +20,9 @@ public class Comment {
     @Column(nullable = false, length = 200)
     private String content;
 
+    @Column(name = "parent_id")
+    private Long parentId;  // ✅ 新增：父评论ID
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -35,6 +38,9 @@ public class Comment {
 
     public String getContent() { return content; }
     public void setContent(String content) { this.content = content; }
+
+    public Long getParentId() { return parentId; }
+    public void setParentId(Long parentId) { this.parentId = parentId; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
