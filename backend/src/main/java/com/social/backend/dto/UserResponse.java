@@ -5,7 +5,10 @@ public class UserResponse {
     private String username;
     private String nickname;
     private String avatar;
+    private String email;
+    private String bio;   // ✅ 新增
 
+    // ========== Getters and Setters ==========
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -17,4 +20,10 @@ public class UserResponse {
 
     public String getAvatar() { return avatar; }
     public void setAvatar(String avatar) { this.avatar = avatar; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+    public String getBio() { return bio; }
+    public void setBio(String bio) { this.bio = bio; }
 }
