@@ -1,6 +1,7 @@
 package com.social.backend.service;
 
 import com.social.backend.dto.CommentRequest;
+import com.social.backend.dto.CommentResponse;
 import com.social.backend.dto.PostRequest;
 import com.social.backend.dto.PostResponse;
 import com.social.backend.entity.Comment;
@@ -94,15 +95,12 @@ public class PostService {
             throw new RuntimeException("没有权限删除此动态");
         }
         
-        // 删除点赞记录
         likeRepository.deleteAll(likeRepository.findAll().stream()
                 .filter(like -> like.getPostId().equals(postId))
                 .collect(Collectors.toList()));
         
-        // 删除评论
-        commentRepository.deleteAll(commentRepository.findByPostIdOrderByCreatedAtAsc(postId));
+        commentRepository.deleteAll(commentRepository.findByPostIdAndParentIdIsNullOrderByCreatedAtAsc(postId));
         
-        // 删除动态
         postRepository.delete(post);
     }
 
@@ -115,13 +113,11 @@ public class PostService {
         java.util.Optional<Like> existingLike = likeRepository.findByPostIdAndUserId(postId, userId);
 
         if (existingLike.isPresent()) {
-            // 取消点赞
             likeRepository.delete(existingLike.get());
             post.setLikesCount(post.getLikesCount() - 1);
             postRepository.save(post);
             return post.getLikesCount();
         } else {
-            // 点赞
             Like like = new Like();
             like.setPostId(postId);
             like.setUserId(userId);
@@ -133,7 +129,8 @@ public class PostService {
         }
     }
 
-    // 发表评论
+    // 发表评论（支持回复）
+    @Transactional
     public Comment addComment(Long postId, Long userId, CommentRequest request) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("动态不存在"));
@@ -147,15 +144,83 @@ public class PostService {
         comment.setContent(request.getContent());
         comment.setCreatedAt(LocalDateTime.now());
 
+        if (request.getParentId() != null) {
+            Comment parent = commentRepository.findById(request.getParentId())
+                    .orElseThrow(() -> new RuntimeException("父评论不存在"));
+            comment.setParentId(request.getParentId());
+        }
+
         return commentRepository.save(comment);
     }
 
-    // 获取动态的评论列表
-    public List<Comment> getComments(Long postId) {
-        return commentRepository.findByPostIdOrderByCreatedAtAsc(postId);
+    // 获取评论列表（树形结构）
+    public List<CommentResponse> getCommentsWithReplies(Long postId) {
+        List<Comment> topComments = commentRepository.findByPostIdAndParentIdIsNullOrderByCreatedAtAsc(postId);
+        
+        return topComments.stream()
+                .map(this::convertToCommentResponse)
+                .collect(Collectors.toList());
     }
 
-    // 转换方法：带当前用户（用于判断是否点赞）
+    // 转换评论 + 加载子评论
+    private CommentResponse convertToCommentResponse(Comment comment) {
+        User user = userRepository.findById(comment.getUserId()).orElse(null);
+        
+        CommentResponse response = new CommentResponse();
+        response.setId(comment.getId());
+        response.setUserId(comment.getUserId());
+        response.setContent(comment.getContent());
+        response.setParentId(comment.getParentId());
+        response.setCreatedAt(comment.getCreatedAt());
+        
+        if (user != null) {
+            response.setUsername(user.getUsername());
+            response.setNickname(user.getNickname());
+            response.setAvatar(user.getAvatar());
+        }
+        
+        List<Comment> replies = commentRepository.findByParentIdOrderByCreatedAtAsc(comment.getId());
+        List<CommentResponse> replyResponses = replies.stream()
+                .map(this::convertToCommentResponse)
+                .collect(Collectors.toList());
+        response.setReplies(replyResponses);
+        
+        return response;
+    }
+
+    // 获取点赞用户列表
+    public List<User> getLikedUsers(Long postId) {
+        List<Like> likes = likeRepository.findByPostId(postId);
+        return likes.stream()
+                .map(like -> userRepository.findById(like.getUserId()).orElse(null))
+                .filter(user -> user != null)
+                .collect(Collectors.toList());
+    }
+
+    // 获取用户点赞过的所有动态
+    public List<Post> getLikedPostsByUser(Long userId) {
+        List<Like> likes = likeRepository.findByUserId(userId);
+        return likes.stream()
+                .map(like -> postRepository.findById(like.getPostId()).orElse(null))
+                .filter(post -> post != null)
+                .collect(Collectors.toList());
+    }
+
+    // 获取用户评论过的所有动态（只保留一个）
+    public List<Post> getCommentedPostsByUser(Long userId) {
+        List<Long> postIds = commentRepository.findDistinctPostIdsByUserId(userId);
+        return postIds.stream()
+                .map(postId -> postRepository.findById(postId).orElse(null))
+                .filter(post -> post != null)
+                .collect(Collectors.toList());
+    }
+
+    // 获取用户的所有评论（只保留一个）
+    public List<Comment> getCommentsByUser(Long userId) {
+        return commentRepository.findByUserIdOrderByCreatedAtDesc(userId);
+    }
+
+    // 转换方法：带当前用户
     private PostResponse convertToResponse(Post post, User user, Long currentUserId) {
         PostResponse response = new PostResponse();
         response.setId(post.getId());
@@ -172,9 +237,8 @@ public class PostService {
         }
         
         response.setLikesCount(post.getLikesCount());
-        response.setCommentCount(commentRepository.findByPostIdOrderByCreatedAtAsc(post.getId()).size());
+        response.setCommentCount(commentRepository.findByPostIdAndParentIdIsNullOrderByCreatedAtAsc(post.getId()).size());
         
-        // 判断当前用户是否点赞
         if (currentUserId != null) {
             response.setLiked(likeRepository.findByPostIdAndUserId(post.getId(), currentUserId).isPresent());
         } else {
@@ -185,7 +249,7 @@ public class PostService {
         return response;
     }
 
-    // 转换方法：不带当前用户（用于创建时）
+    // 转换方法：不带当前用户
     private PostResponse convertToResponse(Post post, User user) {
         return convertToResponse(post, user, null);
     }

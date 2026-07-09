@@ -11,7 +11,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,17 +31,82 @@ public class FriendService {
     private static final int STATUS_ACCEPTED = 1;
     private static final int STATUS_REJECTED = 2;
 
-    // 搜索用户（按用户名关键词）
-    public List<User> searchUsers(String keyword) {
+    // ===== 搜索用户（排除自己，返回好友状态） =====
+    public List<Map<String, Object>> searchUsers(String keyword, String field, Long currentUserId) {
         if (keyword == null || keyword.isEmpty()) {
             throw new RuntimeException("搜索关键词不能为空");
         }
-        return userRepository.findByUsernameContaining(keyword);
+
+        List<User> results;
+        if (field == null || field.isEmpty() || "all".equals(field)) {
+            results = userRepository.searchUsers(keyword);
+        } else {
+            results = userRepository.searchUsersByField(keyword, field);
+        }
+
+        List<Map<String, Object>> responseList = new ArrayList<>();
+        for (User user : results) {
+            // 排除自己
+            if (user.getId().equals(currentUserId)) {
+                continue;
+            }
+
+            Map<String, Object> item = new HashMap<>();
+            item.put("id", user.getId());
+            item.put("username", user.getUsername());
+            item.put("nickname", user.getNickname());
+            item.put("avatar", user.getAvatar());
+
+            // 检查好友关系状态
+            Optional<Friend> existing = friendRepository.findByUserIdAndFriendId(currentUserId, user.getId());
+            if (existing.isPresent()) {
+                int status = existing.get().getStatus();
+                if (status == STATUS_ACCEPTED) {
+                    item.put("friendStatus", "好友");
+                } else if (status == STATUS_PENDING) {
+                    item.put("friendStatus", "待确认");
+                } else {
+                    item.put("friendStatus", "已拒绝");
+                }
+            } else {
+                // 检查对方是否向我发过请求
+                Optional<Friend> reverse = friendRepository.findByUserIdAndFriendId(user.getId(), currentUserId);
+                if (reverse.isPresent() && reverse.get().getStatus() == STATUS_PENDING) {
+                    item.put("friendStatus", "待处理");
+                } else {
+                    item.put("friendStatus", "未添加");
+                }
+            }
+            responseList.add(item);
+        }
+        return responseList;
+    }
+
+    // ===== 检查两个用户是否为好友 =====
+    public boolean areFriends(Long userId1, Long userId2) {
+        if (userId1.equals(userId2)) {
+            return false;
+        }
+
+        Optional<Friend> friend = friendRepository.findByUserIdAndFriendId(userId1, userId2);
+        return friend.isPresent() && friend.get().getStatus() == STATUS_ACCEPTED;
+    }
+
+    // ===== 检查是否为好友（用于Controller返回友好信息） =====
+    public void checkFriendship(Long userId1, Long userId2) {
+        if (userId1.equals(userId2)) {
+            throw new RuntimeException("不能给自己发消息");
+        }
+
+        if (!areFriends(userId1, userId2)) {
+            throw new RuntimeException("还不是好友，无法发送消息");
+        }
     }
 
     // 发送好友请求
     @Transactional
     public void sendFriendRequest(Long userId, Long friendId) {
+        // 自己不能加自己（已有）
         if (userId.equals(friendId)) {
             throw new RuntimeException("不能添加自己为好友");
         }
@@ -142,7 +211,6 @@ public class FriendService {
     @Transactional
     public void deleteFriend(Long userId, Long friendId) {
         friendRepository.deleteByUserIdAndFriendId(userId, friendId);
-        // 删除反向关系
         friendRepository.deleteByUserIdAndFriendId(friendId, userId);
     }
 }

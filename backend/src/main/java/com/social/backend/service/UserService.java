@@ -38,6 +38,8 @@ public class UserService {
         response.setUsername(savedUser.getUsername());
         response.setNickname(savedUser.getNickname());
         response.setAvatar(savedUser.getAvatar());
+        response.setEmail(savedUser.getEmail());
+        response.setBio(savedUser.getBio());   // ✅ 新增
         return response;
     }
 
@@ -55,6 +57,8 @@ public class UserService {
         response.setUsername(user.getUsername());
         response.setNickname(user.getNickname());
         response.setAvatar(user.getAvatar());
+        response.setEmail(user.getEmail());
+        response.setBio(user.getBio());   // ✅ 新增
         return response;
     }
 
@@ -68,11 +72,13 @@ public class UserService {
         response.setUsername(user.getUsername());
         response.setNickname(user.getNickname());
         response.setAvatar(user.getAvatar());
+        response.setEmail(user.getEmail());
+        response.setBio(user.getBio());   // ✅ 新增
         return response;
     }
 
     // 更新用户资料
-    public UserResponse updateProfile(Long userId, String nickname, String avatar, String email) {
+    public UserResponse updateProfile(Long userId, String nickname, String avatar, String email, String bio) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
 
@@ -85,6 +91,9 @@ public class UserService {
         if (email != null && !email.isEmpty()) {
             user.setEmail(email);
         }
+        if (bio != null && !bio.isEmpty()) {
+            user.setBio(bio);   // ✅ 新增
+        }
         user.setUpdatedAt(LocalDateTime.now());
 
         User updatedUser = userRepository.save(user);
@@ -94,6 +103,8 @@ public class UserService {
         response.setUsername(updatedUser.getUsername());
         response.setNickname(updatedUser.getNickname());
         response.setAvatar(updatedUser.getAvatar());
+        response.setEmail(updatedUser.getEmail());
+        response.setBio(updatedUser.getBio());   // ✅ 新增
         return response;
     }
 }
