@@ -12,19 +12,20 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // WebSocket 连接端点，前端通过这里连接
         registry.addEndpoint("/ws/chat")
-                .setAllowedOriginPatterns("*")
-                .withSockJS();  // 支持 SockJS 降级方案
+                .setAllowedOrigins(
+                    "http://localhost:5173",
+                    "http://127.0.0.1:5173",
+                    "http://192.168.43.236:5173",
+                    "http://192.168.43.15:5173"
+                )
+                .withSockJS();
     }
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        // 消息代理前缀（订阅消息的地址）
         registry.enableSimpleBroker("/topic", "/queue", "/user");
-        // 应用程序前缀（发送消息的地址）
         registry.setApplicationDestinationPrefixes("/app");
-        // 用户消息前缀
         registry.setUserDestinationPrefix("/user");
     }
 }
