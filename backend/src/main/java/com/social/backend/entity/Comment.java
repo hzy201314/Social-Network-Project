@@ -17,11 +17,14 @@ public class Comment {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Column(nullable = false, length = 200)
+    @Column(length = 200)   // ✅ 去掉 nullable = false
     private String content;
 
     @Column(name = "parent_id")
-    private Long parentId;  // ✅ 新增：父评论ID
+    private Long parentId;
+
+    @Column(name = "is_deleted")
+    private Integer isDeleted = 0;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -41,6 +44,9 @@ public class Comment {
 
     public Long getParentId() { return parentId; }
     public void setParentId(Long parentId) { this.parentId = parentId; }
+
+    public Integer getIsDeleted() { return isDeleted; }
+    public void setIsDeleted(Integer isDeleted) { this.isDeleted = isDeleted; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

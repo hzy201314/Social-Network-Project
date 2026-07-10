@@ -27,7 +27,32 @@ public class User {
     private String email;
 
     @Column(length = 200)
-    private String bio;   // ✅ 新增：个人简介
+    private String bio;  // ✅ 新增：个人简介
+
+    @Column(name = "hide_likes")
+    private Integer hideLikes = 0;
+
+    @Column(name = "hide_comments")
+    private Integer hideComments = 0;
+
+    @Column(name = "hide_friends")
+    private Integer hideFriends = 0;
+
+    @Column(name = "hide_posts")
+    private Integer hidePosts = 0;
+
+    // Getters and Setters
+    public Integer getHideLikes() { return hideLikes; }
+    public void setHideLikes(Integer hideLikes) { this.hideLikes = hideLikes; }
+
+    public Integer getHideComments() { return hideComments; }
+    public void setHideComments(Integer hideComments) { this.hideComments = hideComments; }
+
+    public Integer getHideFriends() { return hideFriends; }
+    public void setHideFriends(Integer hideFriends) { this.hideFriends = hideFriends; }
+
+    public Integer getHidePosts() { return hidePosts; }
+    public void setHidePosts(Integer hidePosts) { this.hidePosts = hidePosts; }
 
     private LocalDateTime createdAt;
 

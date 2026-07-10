@@ -14,14 +14,17 @@ public class Post {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Column(nullable = false, length = 1000)
+    @Column(length = 1000)   // ✅ 去掉了 nullable = false
     private String content;
 
-    @Column(length = 2000)
+    @Column(length = 2000)   // ✅ 去掉了 nullable = false
     private String images;
 
     @Column(name = "likes_count")
     private Integer likesCount = 0;
+
+    @Column(name = "is_deleted")
+    private Integer isDeleted = 0;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -44,6 +47,9 @@ public class Post {
 
     public Integer getLikesCount() { return likesCount; }
     public void setLikesCount(Integer likesCount) { this.likesCount = likesCount; }
+
+    public Integer getIsDeleted() { return isDeleted; }
+    public void setIsDeleted(Integer isDeleted) { this.isDeleted = isDeleted; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
