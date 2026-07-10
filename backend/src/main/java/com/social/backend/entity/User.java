@@ -27,7 +27,10 @@ public class User {
     private String email;
 
     @Column(length = 200)
-    private String bio;  // ✅ 新增：个人简介
+    private String bio;
+
+    @Column(name = "interest_tags", length = 200)
+    private String interestTags;  // ✅ 新增：兴趣标签
 
     @Column(name = "hide_likes")
     private Integer hideLikes = 0;
@@ -40,19 +43,6 @@ public class User {
 
     @Column(name = "hide_posts")
     private Integer hidePosts = 0;
-
-    // Getters and Setters
-    public Integer getHideLikes() { return hideLikes; }
-    public void setHideLikes(Integer hideLikes) { this.hideLikes = hideLikes; }
-
-    public Integer getHideComments() { return hideComments; }
-    public void setHideComments(Integer hideComments) { this.hideComments = hideComments; }
-
-    public Integer getHideFriends() { return hideFriends; }
-    public void setHideFriends(Integer hideFriends) { this.hideFriends = hideFriends; }
-
-    public Integer getHidePosts() { return hidePosts; }
-    public void setHidePosts(Integer hidePosts) { this.hidePosts = hidePosts; }
 
     private LocalDateTime createdAt;
 
@@ -79,6 +69,21 @@ public class User {
 
     public String getBio() { return bio; }
     public void setBio(String bio) { this.bio = bio; }
+
+    public String getInterestTags() { return interestTags; }
+    public void setInterestTags(String interestTags) { this.interestTags = interestTags; }
+
+    public Integer getHideLikes() { return hideLikes; }
+    public void setHideLikes(Integer hideLikes) { this.hideLikes = hideLikes; }
+
+    public Integer getHideComments() { return hideComments; }
+    public void setHideComments(Integer hideComments) { this.hideComments = hideComments; }
+
+    public Integer getHideFriends() { return hideFriends; }
+    public void setHideFriends(Integer hideFriends) { this.hideFriends = hideFriends; }
+
+    public Integer getHidePosts() { return hidePosts; }
+    public void setHidePosts(Integer hidePosts) { this.hidePosts = hidePosts; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
