@@ -28,7 +28,7 @@ public class FriendService {
     private UserRepository userRepository;
 
     @Autowired
-    private NotificationService notificationService;  // ✅ 新增
+    private NotificationService notificationService;
 
     private static final int STATUS_PENDING = 0;
     private static final int STATUS_ACCEPTED = 1;
@@ -103,6 +103,14 @@ public class FriendService {
         }
     }
 
+    // ===== ✅ 新增：获取用户所有好友的ID列表 =====
+    public List<Long> getFriendIds(Long userId) {
+        List<Friend> friends = friendRepository.findByUserIdAndStatus(userId, STATUS_ACCEPTED);
+        return friends.stream()
+                .map(Friend::getFriendId)
+                .collect(Collectors.toList());
+    }
+
     // ===== 发送好友请求 =====
     @Transactional
     public void sendFriendRequest(Long userId, Long friendId) {
@@ -123,15 +131,12 @@ public class FriendService {
             }
         }
 
-        // 检查是否有反向的待确认请求（对方先加了你）
         Friend reverse = friendRepository.findByUserIdAndFriendId(friendId, userId).orElse(null);
         if (reverse != null && reverse.getStatus() == STATUS_PENDING) {
-            // 自动同意
             reverse.setStatus(STATUS_ACCEPTED);
             reverse.setUpdatedAt(LocalDateTime.now());
             friendRepository.save(reverse);
-            
-            // 创建正向好友记录（双向）
+
             Friend forward = new Friend();
             forward.setUserId(userId);
             forward.setFriendId(friendId);
@@ -139,7 +144,6 @@ public class FriendService {
             forward.setCreatedAt(LocalDateTime.now());
             forward.setUpdatedAt(LocalDateTime.now());
             friendRepository.save(forward);
-            
             return;
         }
 
@@ -151,7 +155,6 @@ public class FriendService {
         friend.setUpdatedAt(LocalDateTime.now());
         friendRepository.save(friend);
 
-        // ✅ 发送好友请求通知
         User sender = userRepository.findById(userId).orElse(null);
         String content = (sender != null ? sender.getNickname() : "用户") + " 请求添加你为好友";
         notificationService.sendNotification(
@@ -163,7 +166,7 @@ public class FriendService {
         );
     }
 
-    // 获取好友请求列表（收到的待确认请求）
+    // 获取好友请求列表
     public List<FriendRequestResponse> getPendingRequests(Long userId) {
         List<Friend> pendingList = friendRepository.findByFriendIdAndStatus(userId, STATUS_PENDING);
         return pendingList.stream().map(f -> {
@@ -182,7 +185,7 @@ public class FriendService {
         }).collect(Collectors.toList());
     }
 
-    // 处理好友请求（同意/拒绝）
+    // 处理好友请求
     @Transactional
     public void handleFriendRequest(Long requestId, Long userId, Integer action) {
         Friend friend = friendRepository.findById(requestId)
@@ -200,8 +203,7 @@ public class FriendService {
             friend.setStatus(STATUS_ACCEPTED);
             friend.setUpdatedAt(LocalDateTime.now());
             friendRepository.save(friend);
-            
-            // 创建反向好友记录（双向）
+
             Friend reverse = new Friend();
             reverse.setUserId(friend.getFriendId());
             reverse.setFriendId(friend.getUserId());
@@ -209,7 +211,7 @@ public class FriendService {
             reverse.setCreatedAt(LocalDateTime.now());
             reverse.setUpdatedAt(LocalDateTime.now());
             friendRepository.save(reverse);
-            
+
         } else if (action == STATUS_REJECTED) {
             friend.setStatus(STATUS_REJECTED);
             friend.setUpdatedAt(LocalDateTime.now());

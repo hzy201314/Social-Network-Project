@@ -150,4 +150,22 @@ public class UserService {
         response.setHidePosts(updatedUser.getHidePosts());
         return response;
     }
+
+    // ===== 获取原始用户实体（用于隐私检查） =====
+    public User getUserEntity(Long userId) {
+        return userRepository.findById(userId)
+                .orElse(null);
+    }
+
+    // ===== 更新用户兴趣标签 =====
+    public UserResponse updateInterests(Long userId, String interestTags) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("用户不存在"));
+        
+        user.setInterestTags(interestTags);
+        user.setUpdatedAt(LocalDateTime.now());
+        User updatedUser = userRepository.save(user);
+        
+        return getCurrentUser(updatedUser.getId());
+    }
 }
