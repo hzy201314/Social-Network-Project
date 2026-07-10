@@ -27,6 +27,9 @@ public class FriendService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private NotificationService notificationService;  // ✅ 新增
+
     private static final int STATUS_PENDING = 0;
     private static final int STATUS_ACCEPTED = 1;
     private static final int STATUS_REJECTED = 2;
@@ -46,7 +49,6 @@ public class FriendService {
 
         List<Map<String, Object>> responseList = new ArrayList<>();
         for (User user : results) {
-            // 排除自己
             if (user.getId().equals(currentUserId)) {
                 continue;
             }
@@ -57,7 +59,6 @@ public class FriendService {
             item.put("nickname", user.getNickname());
             item.put("avatar", user.getAvatar());
 
-            // 检查好友关系状态
             Optional<Friend> existing = friendRepository.findByUserIdAndFriendId(currentUserId, user.getId());
             if (existing.isPresent()) {
                 int status = existing.get().getStatus();
@@ -69,7 +70,6 @@ public class FriendService {
                     item.put("friendStatus", "已拒绝");
                 }
             } else {
-                // 检查对方是否向我发过请求
                 Optional<Friend> reverse = friendRepository.findByUserIdAndFriendId(user.getId(), currentUserId);
                 if (reverse.isPresent() && reverse.get().getStatus() == STATUS_PENDING) {
                     item.put("friendStatus", "待处理");
@@ -103,20 +103,17 @@ public class FriendService {
         }
     }
 
-    // 发送好友请求
+    // ===== 发送好友请求 =====
     @Transactional
     public void sendFriendRequest(Long userId, Long friendId) {
-        // 自己不能加自己（已有）
         if (userId.equals(friendId)) {
             throw new RuntimeException("不能添加自己为好友");
         }
 
-        // 检查对方是否存在
         if (!userRepository.existsById(friendId)) {
             throw new RuntimeException("用户不存在");
         }
 
-        // 检查是否已经是好友或已有请求
         Friend existing = friendRepository.findByUserIdAndFriendId(userId, friendId).orElse(null);
         if (existing != null) {
             if (existing.getStatus() == STATUS_PENDING) {
@@ -129,10 +126,20 @@ public class FriendService {
         // 检查是否有反向的待确认请求（对方先加了你）
         Friend reverse = friendRepository.findByUserIdAndFriendId(friendId, userId).orElse(null);
         if (reverse != null && reverse.getStatus() == STATUS_PENDING) {
-            // 自动同意：对方先申请，现在你申请，直接成为好友
+            // 自动同意
             reverse.setStatus(STATUS_ACCEPTED);
             reverse.setUpdatedAt(LocalDateTime.now());
             friendRepository.save(reverse);
+            
+            // 创建正向好友记录（双向）
+            Friend forward = new Friend();
+            forward.setUserId(userId);
+            forward.setFriendId(friendId);
+            forward.setStatus(STATUS_ACCEPTED);
+            forward.setCreatedAt(LocalDateTime.now());
+            forward.setUpdatedAt(LocalDateTime.now());
+            friendRepository.save(forward);
+            
             return;
         }
 
@@ -143,6 +150,17 @@ public class FriendService {
         friend.setCreatedAt(LocalDateTime.now());
         friend.setUpdatedAt(LocalDateTime.now());
         friendRepository.save(friend);
+
+        // ✅ 发送好友请求通知
+        User sender = userRepository.findById(userId).orElse(null);
+        String content = (sender != null ? sender.getNickname() : "用户") + " 请求添加你为好友";
+        notificationService.sendNotification(
+            friendId,
+            userId,
+            "friend_request",
+            null,
+            content
+        );
     }
 
     // 获取好友请求列表（收到的待确认请求）
@@ -170,7 +188,6 @@ public class FriendService {
         Friend friend = friendRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("好友请求不存在"));
 
-        // 只有请求的接收方才能处理
         if (!friend.getFriendId().equals(userId)) {
             throw new RuntimeException("没有权限处理此请求");
         }
@@ -181,13 +198,25 @@ public class FriendService {
 
         if (action == STATUS_ACCEPTED) {
             friend.setStatus(STATUS_ACCEPTED);
+            friend.setUpdatedAt(LocalDateTime.now());
+            friendRepository.save(friend);
+            
+            // 创建反向好友记录（双向）
+            Friend reverse = new Friend();
+            reverse.setUserId(friend.getFriendId());
+            reverse.setFriendId(friend.getUserId());
+            reverse.setStatus(STATUS_ACCEPTED);
+            reverse.setCreatedAt(LocalDateTime.now());
+            reverse.setUpdatedAt(LocalDateTime.now());
+            friendRepository.save(reverse);
+            
         } else if (action == STATUS_REJECTED) {
             friend.setStatus(STATUS_REJECTED);
+            friend.setUpdatedAt(LocalDateTime.now());
+            friendRepository.save(friend);
         } else {
             throw new RuntimeException("无效的操作");
         }
-        friend.setUpdatedAt(LocalDateTime.now());
-        friendRepository.save(friend);
     }
 
     // 获取好友列表

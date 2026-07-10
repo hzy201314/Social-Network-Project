@@ -39,7 +39,7 @@ public class MessageService {
         return messages.stream().map(this::convertToResponse).collect(Collectors.toList());
     }
 
-    // 标记消息为已读
+    // 标记消息为已读（按好友）
     @Transactional
     public void markAsRead(Long userId, Long senderId) {
         List<Message> unreadMessages = messageRepository.findByReceiverIdAndIsRead(userId, 0);
@@ -51,9 +51,28 @@ public class MessageService {
         }
     }
 
+    // ✅ 新增：标记多条消息为已读
+    @Transactional
+    public void markMessagesAsRead(Long userId, List<Long> messageIds) {
+        for (Long messageId : messageIds) {
+            Message message = messageRepository.findById(messageId).orElse(null);
+            if (message != null && message.getReceiverId().equals(userId)) {
+                message.setIsRead(1);
+                messageRepository.save(message);
+            }
+        }
+    }
+
     // 获取未读消息数
     public int getUnreadCount(Long userId) {
-        return messageRepository.findByReceiverIdAndIsRead(userId, 0).size();
+        List<Message> messages = messageRepository.findByReceiverIdAndIsRead(userId, 0);
+        return messages != null ? messages.size() : 0;
+    }
+
+    // ✅ 新增：获取未读消息列表
+    public List<MessageResponse> getUnreadMessages(Long userId) {
+        List<Message> messages = messageRepository.findUnreadByReceiverId(userId);
+        return messages.stream().map(this::convertToResponse).collect(Collectors.toList());
     }
 
     // 转换方法

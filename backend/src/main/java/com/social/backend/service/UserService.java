@@ -39,7 +39,12 @@ public class UserService {
         response.setNickname(savedUser.getNickname());
         response.setAvatar(savedUser.getAvatar());
         response.setEmail(savedUser.getEmail());
-        response.setBio(savedUser.getBio());   // ✅ 新增
+        response.setBio(savedUser.getBio());
+        // 隐私字段默认值
+        response.setHideLikes(0);
+        response.setHideComments(0);
+        response.setHideFriends(0);
+        response.setHidePosts(0);
         return response;
     }
 
@@ -58,7 +63,12 @@ public class UserService {
         response.setNickname(user.getNickname());
         response.setAvatar(user.getAvatar());
         response.setEmail(user.getEmail());
-        response.setBio(user.getBio());   // ✅ 新增
+        response.setBio(user.getBio());
+        // 返回隐私字段
+        response.setHideLikes(user.getHideLikes());
+        response.setHideComments(user.getHideComments());
+        response.setHideFriends(user.getHideFriends());
+        response.setHidePosts(user.getHidePosts());
         return response;
     }
 
@@ -73,12 +83,27 @@ public class UserService {
         response.setNickname(user.getNickname());
         response.setAvatar(user.getAvatar());
         response.setEmail(user.getEmail());
-        response.setBio(user.getBio());   // ✅ 新增
+        response.setBio(user.getBio());
+        // 返回隐私字段
+        response.setHideLikes(user.getHideLikes());
+        response.setHideComments(user.getHideComments());
+        response.setHideFriends(user.getHideFriends());
+        response.setHidePosts(user.getHidePosts());
         return response;
     }
 
-    // 更新用户资料
-    public UserResponse updateProfile(Long userId, String nickname, String avatar, String email, String bio) {
+    // 更新用户资料（包含隐私设置）
+    public UserResponse updateProfile(
+            Long userId, 
+            String nickname, 
+            String avatar, 
+            String email, 
+            String bio,
+            Integer hideLikes, 
+            Integer hideComments, 
+            Integer hideFriends, 
+            Integer hidePosts) {
+        
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
 
@@ -91,9 +116,23 @@ public class UserService {
         if (email != null && !email.isEmpty()) {
             user.setEmail(email);
         }
-        if (bio != null && !bio.isEmpty()) {
-            user.setBio(bio);   // ✅ 新增
+        if (bio != null) {
+            user.setBio(bio);
         }
+        // 更新隐私设置
+        if (hideLikes != null) {
+            user.setHideLikes(hideLikes);
+        }
+        if (hideComments != null) {
+            user.setHideComments(hideComments);
+        }
+        if (hideFriends != null) {
+            user.setHideFriends(hideFriends);
+        }
+        if (hidePosts != null) {
+            user.setHidePosts(hidePosts);
+        }
+        
         user.setUpdatedAt(LocalDateTime.now());
 
         User updatedUser = userRepository.save(user);
@@ -104,7 +143,11 @@ public class UserService {
         response.setNickname(updatedUser.getNickname());
         response.setAvatar(updatedUser.getAvatar());
         response.setEmail(updatedUser.getEmail());
-        response.setBio(updatedUser.getBio());   // ✅ 新增
+        response.setBio(updatedUser.getBio());
+        response.setHideLikes(updatedUser.getHideLikes());
+        response.setHideComments(updatedUser.getHideComments());
+        response.setHideFriends(updatedUser.getHideFriends());
+        response.setHidePosts(updatedUser.getHidePosts());
         return response;
     }
 }
