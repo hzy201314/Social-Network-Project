@@ -165,4 +165,23 @@ public class PostController {
             return ApiResponse.error(e.getMessage());
         }
     }
+
+    // ===== ✅ 新增：获取个性化推荐动态 =====
+    @GetMapping("/recommend")
+    public ApiResponse<List<PostResponse>> getRecommendPosts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        if (userId == null) {
+            return ApiResponse.error("请先登录");
+        }
+
+        try {
+            List<PostResponse> posts = postService.getRecommendPosts(userId, page, size);
+            return ApiResponse.success(posts);
+        } catch (RuntimeException e) {
+            return ApiResponse.error(e.getMessage());
+        }
+    }
 }
