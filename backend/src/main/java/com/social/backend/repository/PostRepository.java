@@ -9,9 +9,12 @@ import java.util.List;
 
 public interface PostRepository extends JpaRepository<Post, Long> {
 
-    // ✅ 分页查询未删除的动态
+    // 分页查询未删除的动态
     Page<Post> findByIsDeleted(Integer isDeleted, Pageable pageable);
 
-    // ✅ 查询指定用户的未删除动态
+    // ✅ 新增：获取所有未删除的动态
+    List<Post> findAllByIsDeleted(Integer isDeleted);
+
+    // 查询指定用户的未删除动态
     List<Post> findByUserIdAndIsDeleted(Long userId, Integer isDeleted);
 }
