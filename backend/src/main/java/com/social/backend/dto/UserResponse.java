@@ -6,7 +6,11 @@ public class UserResponse {
     private String nickname;
     private String avatar;
     private String email;
-    private String bio;   // ✅ 新增
+    private String bio;
+    private Integer hideLikes;
+    private Integer hideComments;
+    private Integer hideFriends;
+    private Integer hidePosts;
 
     // ========== Getters and Setters ==========
     public Long getId() { return id; }
@@ -26,4 +30,16 @@ public class UserResponse {
 
     public String getBio() { return bio; }
     public void setBio(String bio) { this.bio = bio; }
+
+    public Integer getHideLikes() { return hideLikes; }
+    public void setHideLikes(Integer hideLikes) { this.hideLikes = hideLikes; }
+
+    public Integer getHideComments() { return hideComments; }
+    public void setHideComments(Integer hideComments) { this.hideComments = hideComments; }
+
+    public Integer getHideFriends() { return hideFriends; }
+    public void setHideFriends(Integer hideFriends) { this.hideFriends = hideFriends; }
+
+    public Integer getHidePosts() { return hidePosts; }
+    public void setHidePosts(Integer hidePosts) { this.hidePosts = hidePosts; }
 }

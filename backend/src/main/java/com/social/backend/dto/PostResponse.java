@@ -14,6 +14,7 @@ public class PostResponse {
     private Integer likesCount;
     private Integer commentCount;
     private Boolean liked;
+    private Integer isDeleted;  // ✅ 新增
     private LocalDateTime createdAt;
 
     // ========== Getters and Setters ==========
@@ -46,6 +47,9 @@ public class PostResponse {
 
     public Boolean getLiked() { return liked; }
     public void setLiked(Boolean liked) { this.liked = liked; }
+
+    public Integer getIsDeleted() { return isDeleted; }
+    public void setIsDeleted(Integer isDeleted) { this.isDeleted = isDeleted; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

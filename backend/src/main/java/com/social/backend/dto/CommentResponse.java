@@ -12,8 +12,9 @@ public class CommentResponse {
     private String avatar;
     private String content;
     private Long parentId;
+    private Integer isDeleted;  // ✅ 新增
     private LocalDateTime createdAt;
-    private List<CommentResponse> replies = new ArrayList<>();  // ✅ 子评论列表
+    private List<CommentResponse> replies = new ArrayList<>();
 
     // ========== Getters and Setters ==========
     public Long getId() { return id; }
@@ -36,6 +37,9 @@ public class CommentResponse {
 
     public Long getParentId() { return parentId; }
     public void setParentId(Long parentId) { this.parentId = parentId; }
+
+    public Integer getIsDeleted() { return isDeleted; }
+    public void setIsDeleted(Integer isDeleted) { this.isDeleted = isDeleted; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
