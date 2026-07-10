@@ -7,6 +7,7 @@ public class UserResponse {
     private String avatar;
     private String email;
     private String bio;
+    private String interestTags;  // ✅ 新增
     private Integer hideLikes;
     private Integer hideComments;
     private Integer hideFriends;
@@ -30,6 +31,9 @@ public class UserResponse {
 
     public String getBio() { return bio; }
     public void setBio(String bio) { this.bio = bio; }
+
+    public String getInterestTags() { return interestTags; }
+    public void setInterestTags(String interestTags) { this.interestTags = interestTags; }
 
     public Integer getHideLikes() { return hideLikes; }
     public void setHideLikes(Integer hideLikes) { this.hideLikes = hideLikes; }
