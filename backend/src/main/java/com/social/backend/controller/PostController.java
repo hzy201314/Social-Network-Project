@@ -77,6 +77,22 @@ public class PostController {
         }
     }
 
+    // 删除评论
+    @DeleteMapping("/comments/{commentId}")
+    public ApiResponse<Void> deleteComment(@PathVariable Long commentId, HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        if (userId == null) {
+            return ApiResponse.error("请先登录");
+        }
+
+        try {
+            postService.deleteComment(commentId, userId);
+            return ApiResponse.success();
+        } catch (RuntimeException e) {
+            return ApiResponse.error(e.getMessage());
+        }
+    }
+
     // 点赞/取消点赞
     @PostMapping("/{id}/like")
     public ApiResponse<Integer> toggleLike(@PathVariable Long id, HttpServletRequest request) {

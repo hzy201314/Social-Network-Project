@@ -3,87 +3,59 @@ package com.social.backend.controller;
 import com.social.backend.dto.ApiResponse;
 import com.social.backend.dto.MessageRequest;
 import com.social.backend.dto.MessageResponse;
-import com.social.backend.dto.UserResponse;
 import com.social.backend.entity.Message;
 import com.social.backend.service.FriendService;
 import com.social.backend.service.MessageService;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
-@Controller
+@RestController
+@RequestMapping("/api/messages")
 public class ChatController {
-
-    @Autowired
-    private SimpMessagingTemplate messagingTemplate;
 
     @Autowired
     private MessageService messageService;
 
     @Autowired
-    private FriendService friendService;   // ✅ 新增
+    private FriendService friendService;
 
-    // WebSocket 发送消息
-    @MessageMapping("/chat.send")
-    public void sendMessage(@Payload MessageRequest request, HttpServletRequest httpRequest) {
+    // ===== 发送消息 =====
+    @PostMapping("/send")
+    public ApiResponse<MessageResponse> sendMessage(@RequestBody MessageRequest request, HttpServletRequest httpRequest) {
         Long userId = (Long) httpRequest.getAttribute("userId");
         if (userId == null) {
-            return;
+            return ApiResponse.error("请先登录");
         }
 
-        // ✅ 检查是否为好友
+        // 检查是否为好友
         try {
             friendService.checkFriendship(userId, request.getReceiverId());
         } catch (RuntimeException e) {
-            System.out.println("❌ 非好友不能发送消息: " + userId + " -> " + request.getReceiverId());
-            // 可以通过 WebSocket 返回错误，这里先打印日志
-            return;
+            return ApiResponse.error(e.getMessage());
         }
 
-        // 保存消息到数据库
         Message message = messageService.saveMessage(
             userId,
             request.getReceiverId(),
             request.getContent()
         );
 
-        // 转换为响应格式
         MessageResponse response = messageService.convertToResponse(message);
-
-        // 实时推送给接收方
-        messagingTemplate.convertAndSendToUser(
-            String.valueOf(request.getReceiverId()),
-            "/queue/messages",
-            response
-        );
-
-        // 同时回传给发送方
-        messagingTemplate.convertAndSendToUser(
-            String.valueOf(userId),
-            "/queue/messages",
-            response
-        );
+        return ApiResponse.success(response);
     }
 
-    // 获取聊天记录（HTTP 接口）
-    @GetMapping("/api/messages/{friendId}")
-    @ResponseBody
+    // ===== 获取聊天记录 =====
+    @GetMapping("/{friendId}")
     public ApiResponse<List<MessageResponse>> getConversation(@PathVariable Long friendId, HttpServletRequest request) {
         Long userId = (Long) request.getAttribute("userId");
         if (userId == null) {
             return ApiResponse.error("请先登录");
         }
 
-        // ✅ 检查是否为好友
         try {
             friendService.checkFriendship(userId, friendId);
         } catch (RuntimeException e) {
@@ -99,9 +71,24 @@ public class ChatController {
         }
     }
 
-    // 获取未读消息数
-    @GetMapping("/api/messages/unread/count")
-    @ResponseBody
+    // ===== 获取未读消息列表 =====
+    @GetMapping("/unread")
+    public ApiResponse<List<MessageResponse>> getUnreadMessages(HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        if (userId == null) {
+            return ApiResponse.error("请先登录");
+        }
+
+        try {
+            List<MessageResponse> messages = messageService.getUnreadMessages(userId);
+            return ApiResponse.success(messages);
+        } catch (RuntimeException e) {
+            return ApiResponse.error(e.getMessage());
+        }
+    }
+
+    // ===== 获取未读消息数 =====
+    @GetMapping("/unread/count")
     public ApiResponse<Integer> getUnreadCount(HttpServletRequest request) {
         Long userId = (Long) request.getAttribute("userId");
         if (userId == null) {
@@ -111,6 +98,25 @@ public class ChatController {
         try {
             int count = messageService.getUnreadCount(userId);
             return ApiResponse.success(count);
+        } catch (RuntimeException e) {
+            return ApiResponse.error(e.getMessage());
+        }
+    }
+
+    // ===== 标记消息为已读 =====
+    @PutMapping("/read")
+    public ApiResponse<Void> markMessagesAsRead(@RequestBody Map<String, List<Long>> payload, HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        if (userId == null) {
+            return ApiResponse.error("请先登录");
+        }
+
+        try {
+            List<Long> messageIds = payload.get("messageIds");
+            if (messageIds != null && !messageIds.isEmpty()) {
+                messageService.markMessagesAsRead(userId, messageIds);
+            }
+            return ApiResponse.success();
         } catch (RuntimeException e) {
             return ApiResponse.error(e.getMessage());
         }

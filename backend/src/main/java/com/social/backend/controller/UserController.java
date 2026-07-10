@@ -23,7 +23,7 @@ public class UserController {
     @Autowired
     private PostService postService;
 
-    // 获取当前用户资料
+    // ===== 获取当前用户资料 =====
     @GetMapping("/profile")
     public ApiResponse<UserResponse> getProfile(HttpServletRequest request) {
         Long userId = (Long) request.getAttribute("userId");
@@ -39,28 +39,59 @@ public class UserController {
         }
     }
 
-    // 更新用户资料
+    // ===== ✅ 新增：获取指定用户资料 =====
+    @GetMapping("/{userId}/profile")
+    public ApiResponse<UserResponse> getUserProfile(@PathVariable Long userId) {
+        try {
+            UserResponse user = userService.getCurrentUser(userId);
+            return ApiResponse.success(user);
+        } catch (RuntimeException e) {
+            return ApiResponse.error(e.getMessage());
+        }
+    }
+
+    // ===== ✅ 新增：获取指定用户的动态列表 =====
+    @GetMapping("/{userId}/posts")
+    public ApiResponse<List<Post>> getUserPosts(@PathVariable Long userId) {
+        try {
+            List<Post> posts = postService.getPostsByUserId(userId);
+            return ApiResponse.success(posts);
+        } catch (RuntimeException e) {
+            return ApiResponse.error(e.getMessage());
+        }
+    }
+
+    // ===== 更新用户资料 =====
     @PutMapping("/profile")
-    public ApiResponse<UserResponse> updateProfile(@RequestBody Map<String, String> params, HttpServletRequest request) {
+    public ApiResponse<UserResponse> updateProfile(@RequestBody Map<String, Object> params, HttpServletRequest request) {
         Long userId = (Long) request.getAttribute("userId");
         if (userId == null) {
             return ApiResponse.error("请先登录");
         }
 
         try {
-            String nickname = params.get("nickname");
-            String avatar = params.get("avatar");
-            String email = params.get("email");
-            String bio = params.get("bio");   // ✅ 新增
+            String nickname = (String) params.get("nickname");
+            String avatar = (String) params.get("avatar");
+            String email = (String) params.get("email");
+            String bio = (String) params.get("bio");
+            
+            Integer hideLikes = (Integer) params.get("hideLikes");
+            Integer hideComments = (Integer) params.get("hideComments");
+            Integer hideFriends = (Integer) params.get("hideFriends");
+            Integer hidePosts = (Integer) params.get("hidePosts");
 
-            UserResponse updatedUser = userService.updateProfile(userId, nickname, avatar, email, bio);
+            UserResponse updatedUser = userService.updateProfile(
+                userId, nickname, avatar, email, bio,
+                hideLikes, hideComments, hideFriends, hidePosts
+            );
+            
             return ApiResponse.success(updatedUser);
         } catch (RuntimeException e) {
             return ApiResponse.error(e.getMessage());
         }
     }
 
-    // 获取当前用户点赞过的所有动态
+    // ===== 获取当前用户点赞过的所有动态 =====
     @GetMapping("/likes")
     public ApiResponse<List<Post>> getLikedPosts(HttpServletRequest request) {
         Long userId = (Long) request.getAttribute("userId");
@@ -76,7 +107,7 @@ public class UserController {
         }
     }
 
-    // 获取用户评论过的所有动态
+    // ===== 获取用户评论过的所有动态 =====
     @GetMapping("/comments/posts")
     public ApiResponse<List<Post>> getCommentedPosts(HttpServletRequest request) {
         Long userId = (Long) request.getAttribute("userId");
@@ -92,7 +123,7 @@ public class UserController {
         }
     }
 
-    // 获取用户的所有评论
+    // ===== 获取用户的所有评论 =====
     @GetMapping("/comments")
     public ApiResponse<List<Comment>> getMyComments(HttpServletRequest request) {
         Long userId = (Long) request.getAttribute("userId");
