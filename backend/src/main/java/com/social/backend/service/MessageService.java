@@ -22,12 +22,16 @@ public class MessageService {
     @Autowired
     private UserRepository userRepository;
 
-    // 保存消息
-    public Message saveMessage(Long senderId, Long receiverId, String content) {
+    // 保存消息（支持文件）
+    public Message saveMessage(Long senderId, Long receiverId, String content,
+                               String fileUrl, String fileType, String fileName) {
         Message message = new Message();
         message.setSenderId(senderId);
         message.setReceiverId(receiverId);
-        message.setContent(content);
+        message.setContent(content != null ? content : "");
+        message.setFileUrl(fileUrl);
+        message.setFileType(fileType);
+        message.setFileName(fileName);
         message.setIsRead(0);
         message.setCreatedAt(LocalDateTime.now());
         return messageRepository.save(message);
@@ -39,7 +43,7 @@ public class MessageService {
         return messages.stream().map(this::convertToResponse).collect(Collectors.toList());
     }
 
-    // 标记消息为已读（按好友）
+    // 标记消息为已读
     @Transactional
     public void markAsRead(Long userId, Long senderId) {
         List<Message> unreadMessages = messageRepository.findByReceiverIdAndIsRead(userId, 0);
@@ -51,7 +55,7 @@ public class MessageService {
         }
     }
 
-    // ✅ 新增：标记多条消息为已读
+    // 标记多条消息为已读
     @Transactional
     public void markMessagesAsRead(Long userId, List<Long> messageIds) {
         for (Long messageId : messageIds) {
@@ -69,7 +73,7 @@ public class MessageService {
         return messages != null ? messages.size() : 0;
     }
 
-    // ✅ 新增：获取未读消息列表
+    // 获取未读消息列表
     public List<MessageResponse> getUnreadMessages(Long userId) {
         List<Message> messages = messageRepository.findUnreadByReceiverId(userId);
         return messages.stream().map(this::convertToResponse).collect(Collectors.toList());
@@ -83,6 +87,9 @@ public class MessageService {
         response.setSenderId(message.getSenderId());
         response.setReceiverId(message.getReceiverId());
         response.setContent(message.getContent());
+        response.setFileUrl(message.getFileUrl());
+        response.setFileType(message.getFileType());
+        response.setFileName(message.getFileName());
         response.setIsRead(message.getIsRead());
         response.setCreatedAt(message.getCreatedAt());
 
