@@ -21,7 +21,7 @@
 </template>
 
 <script setup>
-import { reactive } from 'vue';
+import { reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import request from '@/utils/request'
 
@@ -30,9 +30,14 @@ const router = useRouter()
 const loginForm = reactive({
   username: '',
   password: ''
-});
+})
 
 const handleLogin = async () => {
+  if (!loginForm.username || !loginForm.password) {
+    alert('请输入用户名和密码')
+    return
+  }
+
   try {
     const res = await request.post('/api/auth/login', {
       username: loginForm.username,
@@ -40,15 +45,16 @@ const handleLogin = async () => {
     })
 
     if (res.data.code === 0) {
+      localStorage.setItem('token', res.data.data.token)
+      localStorage.setItem('user', JSON.stringify(res.data.data.user))
       alert('登录成功！')
-      // 可以保存用户信息到 localStorage（后面再完善）
-      router.push('/home')   // 跳转到首页
+      router.push('/home')
     } else {
-      alert(res.data.message) // 比如"用户名或密码错误"
+      alert(res.data.message || '登录失败')
     }
   } catch (error) {
     console.error('登录失败', error)
-    alert('登录失败，请稍后重试')
+    alert('登录失败，请检查网络')
   }
 }
 </script>
@@ -69,10 +75,16 @@ const handleLogin = async () => {
 }
 .login-card {
   background: white;
-  padding: 100px;
+  padding: 40px;
   border-radius: 12px;
-  box-shadow: 0 0 24px 0px rgba(0, 0, 0, 0.5), 0 8px 48px 0px rgba(0, 0, 0, 0.5);
-  width: 480px;
+  box-shadow: 0 0 30px 10px rgba(0,  0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
+  min-height: 380px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 .login-card h2 {
   text-align: center;
