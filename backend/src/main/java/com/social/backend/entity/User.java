@@ -26,6 +26,24 @@ public class User {
     @Column(length = 100)
     private String email;
 
+    @Column(length = 200)
+    private String bio;
+
+    @Column(name = "interest_tags", length = 200)
+    private String interestTags;  // ✅ 新增：兴趣标签
+
+    @Column(name = "hide_likes")
+    private Integer hideLikes = 0;
+
+    @Column(name = "hide_comments")
+    private Integer hideComments = 0;
+
+    @Column(name = "hide_friends")
+    private Integer hideFriends = 0;
+
+    @Column(name = "hide_posts")
+    private Integer hidePosts = 0;
+
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
@@ -48,6 +66,24 @@ public class User {
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
+
+    public String getBio() { return bio; }
+    public void setBio(String bio) { this.bio = bio; }
+
+    public String getInterestTags() { return interestTags; }
+    public void setInterestTags(String interestTags) { this.interestTags = interestTags; }
+
+    public Integer getHideLikes() { return hideLikes; }
+    public void setHideLikes(Integer hideLikes) { this.hideLikes = hideLikes; }
+
+    public Integer getHideComments() { return hideComments; }
+    public void setHideComments(Integer hideComments) { this.hideComments = hideComments; }
+
+    public Integer getHideFriends() { return hideFriends; }
+    public void setHideFriends(Integer hideFriends) { this.hideFriends = hideFriends; }
+
+    public Integer getHidePosts() { return hidePosts; }
+    public void setHidePosts(Integer hidePosts) { this.hidePosts = hidePosts; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

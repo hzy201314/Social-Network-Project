@@ -1,13 +1,13 @@
 package com.social.backend.controller;
 
-import com.social.backend.dto.ApiResponse;
-import com.social.backend.dto.LoginRequest;
-import com.social.backend.dto.RegisterRequest;
-import com.social.backend.dto.UserResponse;
+import com.social.backend.dto.*;
 import com.social.backend.service.UserService;
-import jakarta.servlet.http.HttpSession;
+import com.social.backend.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -15,6 +15,9 @@ public class AuthController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @PostMapping("/register")
     public ApiResponse<UserResponse> register(@RequestBody RegisterRequest request) {
@@ -26,20 +29,34 @@ public class AuthController {
         }
     }
 
+    // ===== 修改登录接口 =====
     @PostMapping("/login")
-    public ApiResponse<UserResponse> login(@RequestBody LoginRequest request, HttpSession session) {
+    public ApiResponse<Map<String, Object>> login(@RequestBody LoginRequest request) {
         try {
+            // 登录验证
             UserResponse user = userService.login(request.getUsername(), request.getPassword());
-            session.setAttribute("user", user);
-            return ApiResponse.success(user);
+            
+            // 生成 JWT Token
+            String token = jwtUtil.generateToken(
+                user.getId(),
+                user.getUsername(),
+                user.getNickname()
+            );
+            
+            // 返回 Token 和用户信息
+            Map<String, Object> data = new HashMap<>();
+            data.put("token", token);
+            data.put("user", user);
+            
+            return ApiResponse.success(data);
         } catch (RuntimeException e) {
             return ApiResponse.error(e.getMessage());
         }
     }
 
     @PostMapping("/logout")
-    public ApiResponse<Void> logout(HttpSession session) {
-        session.removeAttribute("user");
+    public ApiResponse<Void> logout() {
+        // JWT 无状态，前端删除 Token 即可
         return ApiResponse.success();
     }
 }
