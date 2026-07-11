@@ -23,7 +23,7 @@ public class ChatController {
     @Autowired
     private FriendService friendService;
 
-    // ===== 发送消息 =====
+    // ===== 发送消息（支持文件） =====
     @PostMapping("/send")
     public ApiResponse<MessageResponse> sendMessage(@RequestBody MessageRequest request, HttpServletRequest httpRequest) {
         Long userId = (Long) httpRequest.getAttribute("userId");
@@ -38,10 +38,19 @@ public class ChatController {
             return ApiResponse.error(e.getMessage());
         }
 
+        // 至少要有内容或文件
+        if ((request.getContent() == null || request.getContent().isEmpty()) &&
+            (request.getFileUrl() == null || request.getFileUrl().isEmpty())) {
+            return ApiResponse.error("请填写消息内容或上传文件");
+        }
+
         Message message = messageService.saveMessage(
             userId,
             request.getReceiverId(),
-            request.getContent()
+            request.getContent(),
+            request.getFileUrl(),
+            request.getFileType(),
+            request.getFileName()
         );
 
         MessageResponse response = messageService.convertToResponse(message);

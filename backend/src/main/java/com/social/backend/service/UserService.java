@@ -40,7 +40,7 @@ public class UserService {
         response.setAvatar(savedUser.getAvatar());
         response.setEmail(savedUser.getEmail());
         response.setBio(savedUser.getBio());
-        // 隐私字段默认值
+        response.setInterestTags(null);  // ✅ 新增：注册时默认无兴趣标签
         response.setHideLikes(0);
         response.setHideComments(0);
         response.setHideFriends(0);
@@ -64,7 +64,7 @@ public class UserService {
         response.setAvatar(user.getAvatar());
         response.setEmail(user.getEmail());
         response.setBio(user.getBio());
-        // 返回隐私字段
+        response.setInterestTags(user.getInterestTags());  // ✅ 新增
         response.setHideLikes(user.getHideLikes());
         response.setHideComments(user.getHideComments());
         response.setHideFriends(user.getHideFriends());
@@ -84,7 +84,7 @@ public class UserService {
         response.setAvatar(user.getAvatar());
         response.setEmail(user.getEmail());
         response.setBio(user.getBio());
-        // 返回隐私字段
+        response.setInterestTags(user.getInterestTags());  // ✅ 新增
         response.setHideLikes(user.getHideLikes());
         response.setHideComments(user.getHideComments());
         response.setHideFriends(user.getHideFriends());
@@ -92,7 +92,7 @@ public class UserService {
         return response;
     }
 
-    // 更新用户资料（包含隐私设置）
+    // 更新用户资料（包含隐私设置 + 兴趣标签）
     public UserResponse updateProfile(
             Long userId, 
             String nickname, 
@@ -102,7 +102,8 @@ public class UserService {
             Integer hideLikes, 
             Integer hideComments, 
             Integer hideFriends, 
-            Integer hidePosts) {
+            Integer hidePosts,
+            String interestTags) {  // ✅ 新增
         
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
@@ -132,6 +133,10 @@ public class UserService {
         if (hidePosts != null) {
             user.setHidePosts(hidePosts);
         }
+        // ✅ 更新兴趣标签
+        if (interestTags != null) {
+            user.setInterestTags(interestTags);
+        }
         
         user.setUpdatedAt(LocalDateTime.now());
 
@@ -144,6 +149,7 @@ public class UserService {
         response.setAvatar(updatedUser.getAvatar());
         response.setEmail(updatedUser.getEmail());
         response.setBio(updatedUser.getBio());
+        response.setInterestTags(updatedUser.getInterestTags());  // ✅ 新增
         response.setHideLikes(updatedUser.getHideLikes());
         response.setHideComments(updatedUser.getHideComments());
         response.setHideFriends(updatedUser.getHideFriends());
