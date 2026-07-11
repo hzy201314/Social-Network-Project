@@ -158,7 +158,7 @@ public class UserController {
         }
     }
 
-    // ===== 更新用户资料 =====
+    // ===== 更新用户资料（包含兴趣标签） =====
     @PutMapping("/profile")
     public ApiResponse<UserResponse> updateProfile(@RequestBody Map<String, Object> params, HttpServletRequest request) {
         Long userId = (Long) request.getAttribute("userId");
@@ -171,6 +171,7 @@ public class UserController {
             String avatar = (String) params.get("avatar");
             String email = (String) params.get("email");
             String bio = (String) params.get("bio");
+            String interestTags = (String) params.get("interestTags");  // ✅ 新增
             
             Integer hideLikes = (Integer) params.get("hideLikes");
             Integer hideComments = (Integer) params.get("hideComments");
@@ -179,7 +180,8 @@ public class UserController {
 
             UserResponse updatedUser = userService.updateProfile(
                 userId, nickname, avatar, email, bio,
-                hideLikes, hideComments, hideFriends, hidePosts
+                hideLikes, hideComments, hideFriends, hidePosts,
+                interestTags  // ✅ 新增
             );
             
             return ApiResponse.success(updatedUser);
