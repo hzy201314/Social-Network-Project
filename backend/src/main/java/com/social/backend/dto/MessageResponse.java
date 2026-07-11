@@ -10,6 +10,9 @@ public class MessageResponse {
     private String senderAvatar;
     private Long receiverId;
     private String content;
+    private String fileUrl;   // ✅ 新增
+    private String fileType;  // ✅ 新增
+    private String fileName;  // ✅ 新增
     private Integer isRead;
     private LocalDateTime createdAt;
 
@@ -34,6 +37,15 @@ public class MessageResponse {
 
     public String getContent() { return content; }
     public void setContent(String content) { this.content = content; }
+
+    public String getFileUrl() { return fileUrl; }
+    public void setFileUrl(String fileUrl) { this.fileUrl = fileUrl; }
+
+    public String getFileType() { return fileType; }
+    public void setFileType(String fileType) { this.fileType = fileType; }
+
+    public String getFileName() { return fileName; }
+    public void setFileName(String fileName) { this.fileName = fileName; }
 
     public Integer getIsRead() { return isRead; }
     public void setIsRead(Integer isRead) { this.isRead = isRead; }
